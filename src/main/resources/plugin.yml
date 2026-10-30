@@ -1,20 +1,24 @@
-name: MagicChest
+name: DreamChest
 version: ${version}
-main: cn.mythicland.magicchest.MagicChestPlugin
+main: cn.mythicland.dreamchest.DreamChestPlugin
 author: ShanguanLinG
 load: POSTWORLD
-depend: [ Lib, DecentHolograms ]
+depend:
+- DreamLib
+- DecentHolograms
+- MythicMobs
+softdepend:
+- DreamWorld
 description: Virtual administrator-managed chests with scheduled refreshes.
-
 commands:
-  magicchest:
-    description: Manage MagicChest configuration.
-    aliases: [ mchest ]
-
+  dreamchest:
+    description: Manage DreamChest configuration.
+    aliases:
+    - dchest
 permissions:
-  magicchest.admin:
-    description: Allows MagicChest administration and chest editing.
+  dreamchest.admin:
+    description: Allows DreamChest administration and chest editing.
     default: op
-  magicchest.reload:
-    description: Allows reloading MagicChest configuration.
+  dreamchest.reload:
+    description: Allows reloading DreamChest configuration.
     default: op

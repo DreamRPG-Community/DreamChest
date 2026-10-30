@@ -11,6 +11,7 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         mavenCentral()
+        maven { url = uri("https://mvn.lumine.io/repository/maven-public/") }
         maven {
             name = "Paper"
             url = uri("https://repo.papermc.io/repository/maven-public/")
@@ -18,10 +19,10 @@ dependencyResolutionManagement {
     }
 }
 
-includeBuild("../Lib") {
+includeBuild("../DreamLib") {
     dependencySubstitution {
-        substitute module("self-written:Lib") using project(":")
+        substitute module("self-written:DreamLib") using project(":")
     }
 }
 
-rootProject.name = "MagicChest"
+rootProject.name = "DreamChest"

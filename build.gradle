@@ -32,7 +32,7 @@ tasks.named("processResources") {
 }
 
 tasks.withType(Jar).configureEach {
-    archiveBaseName = "MagicChest"
+    archiveBaseName = "DreamChest"
     archiveVersion = ""
     duplicatesStrategy = DuplicatesStrategy.FAIL
 }
@@ -41,12 +41,14 @@ def paperApiVersion = "1.12.2-R0.1-20190714.184133-413"
 
 dependencies {
     compileOnly("com.destroystokyo.paper:paper-api:${paperApiVersion}")
-    compileOnly("self-written:Lib:${project.version}")
+    compileOnly("self-written:DreamLib:${project.version}")
+    compileOnly("io.lumine.xikage:MythicMobs:4.12.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.2")
     testImplementation("com.destroystokyo.paper:paper-api:${paperApiVersion}")
-    testImplementation("self-written:Lib:${project.version}")
-    testRuntimeOnly("self-written:Lib:${project.version}")
+    testImplementation("self-written:DreamLib:${project.version}")
+    testRuntimeOnly("self-written:DreamLib:${project.version}")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.2")
+    testRuntimeOnly("org.xerial:sqlite-jdbc:3.46.1.3")
 }
