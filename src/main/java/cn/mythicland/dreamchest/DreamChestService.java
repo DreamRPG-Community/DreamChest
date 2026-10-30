@@ -620,10 +620,6 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
     }
 
     private void openClaim(Player player, Block sourceBlock, DreamChestRecord record) {
-        if (!record.hasClaimableItems(player.getUniqueId())) {
-            player.sendMessage(LegacyText.colorize("&c暂无物品"));
-            return;
-        }
         DreamChestKey key = record.key();
         try {
             ItemStack[] contents = record.playerContentsCopy(player.getUniqueId());
@@ -1050,13 +1046,14 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
                     record.key().y() + 0.5D,
                     record.key().z() + 0.5D
             );
-            List<DreamChestParticleGeometry.ParticlePoint> particlePoints = DreamChestParticleGeometry.randomAroundChest(
-                    record.key().x(),
-                    record.key().y(),
-                    record.key().z(),
-                    configuration.particleCount(),
-                    ThreadLocalRandom.current()
-            );
+            List<DreamChestParticleGeometry.ParticlePoint> particlePoints =
+                    DreamChestParticleGeometry.randomAroundChest(
+                            record.key().x(),
+                            record.key().y(),
+                            record.key().z(),
+                            configuration.particleCount(),
+                            ThreadLocalRandom.current()
+                    );
             double distanceSquared = (double) configuration.particleRenderDistance()
                     * configuration.particleRenderDistance();
             for (Player player : world.getPlayers()) {

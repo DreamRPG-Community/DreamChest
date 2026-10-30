@@ -105,7 +105,8 @@ final class DreamChestStore implements AutoCloseable {
     private static Throwable unwrap(Throwable failure) {
         Throwable current = failure;
         while (current.getCause() != null
-                && (current instanceof CompletionException || current instanceof java.util.concurrent.ExecutionException)) {
+                && (current instanceof CompletionException ||
+                current instanceof java.util.concurrent.ExecutionException)) {
             current = current.getCause();
         }
         return current;
@@ -137,7 +138,8 @@ final class DreamChestStore implements AutoCloseable {
         Map<String, Map<UUID, String>> playerSnapshot = new LinkedHashMap<>();
         for (DreamChestRecord record : currentRecords) {
             Map<UUID, String> contents = new LinkedHashMap<>();
-            record.playerContentsCopy().forEach((player, items) -> contents.put(player, ItemStackArrayCodec.serialize(items)));
+            record.playerContentsCopy()
+                    .forEach((player, items) -> contents.put(player, ItemStackArrayCodec.serialize(items)));
             playerSnapshot.put(record.key().encoded(), Map.copyOf(contents));
         }
         synchronized (this) {
@@ -160,7 +162,8 @@ final class DreamChestStore implements AutoCloseable {
 
     private void requireHealthy() {
         if (storageFailure != null) {
-            throw new IllegalStateException("DreamChest storage failed; restart after repairing storage", storageFailure);
+            throw new IllegalStateException("DreamChest storage failed; restart after repairing storage",
+                    storageFailure);
         }
     }
 
@@ -186,7 +189,8 @@ final class DreamChestStore implements AutoCloseable {
             configuration.load(file.toFile());
             Object version = configuration.get("version");
             if (!(version instanceof Number number) || number.intValue() < 1 || number.intValue() > VERSION) {
-                throw new IllegalStateException("DreamChest chests.yml requires a supported version between 1 and " + VERSION);
+                throw new IllegalStateException(
+                        "DreamChest chests.yml requires a supported version between 1 and " + VERSION);
             }
             ConfigurationSection section = configuration.getConfigurationSection("chests");
             if (section == null) {
@@ -224,7 +228,8 @@ final class DreamChestStore implements AutoCloseable {
                     throw new IllegalStateException("Claim database references unknown chest: " + entry.getKey());
                 }
                 for (var player : entry.getValue().entrySet()) {
-                    record.setPlayerContents(player.getKey(), ItemStackArrayCodec.deserialize(player.getValue(), DreamChestRecord.STORAGE_SIZE));
+                    record.setPlayerContents(player.getKey(),
+                            ItemStackArrayCodec.deserialize(player.getValue(), DreamChestRecord.STORAGE_SIZE));
                 }
             }
             if (number.intValue() < VERSION) writeSnapshot(serialize(records.values()));
@@ -261,7 +266,8 @@ final class DreamChestStore implements AutoCloseable {
         );
         ConfigurationSection playerContents = chest.getConfigurationSection("player-contents");
         if (playerContents != null && !playerContents.getKeys(false).isEmpty()) {
-            throw new IllegalStateException("Legacy YAML claims require an explicit migration; original chests.yml was not modified");
+            throw new IllegalStateException(
+                    "Legacy YAML claims require an explicit migration; original chests.yml was not modified");
         }
         return record;
     }
@@ -298,7 +304,8 @@ final class DreamChestStore implements AutoCloseable {
     }
 
     private ItemStack[] decode(ConfigurationSection section, String path) {
-        if (section.isString(path)) return ItemStackArrayCodec.deserialize(requiredString(section, path), DreamChestRecord.STORAGE_SIZE);
+        if (section.isString(path))
+            return ItemStackArrayCodec.deserialize(requiredString(section, path), DreamChestRecord.STORAGE_SIZE);
         ConfigurationSection slots = section.getConfigurationSection(path);
         if (slots == null) throw new IllegalStateException("Chest requires item reference slots: " + path);
         ItemStack[] contents = new ItemStack[DreamChestRecord.STORAGE_SIZE];
@@ -313,7 +320,8 @@ final class DreamChestStore implements AutoCloseable {
                 throw new IllegalArgumentException("Chest amount must be an integer: " + key);
             }
             int amount = count.intValue();
-            if (amount < 1 || amount > 64) throw new IllegalArgumentException("Chest amount must be between 1 and 64: " + key);
+            if (amount < 1 || amount > 64)
+                throw new IllegalArgumentException("Chest amount must be between 1 and 64: " + key);
             ItemStack item = MythicMobs.inst().getItemManager().getItemStack(id);
             if (item == null) throw new IllegalStateException("Unknown chest item library key: " + id);
             item.setAmount(amount);
@@ -331,7 +339,8 @@ final class DreamChestStore implements AutoCloseable {
             ItemStack item = contents[slot];
             if (DreamChestRecord.isEmpty(item)) continue;
             var marker = lib.itemMarkerCodec().read(item, "DreamRPG")
-                    .orElseThrow(() -> new IllegalArgumentException("Chest rewards must reference the RPG item library"));
+                    .orElseThrow(
+                            () -> new IllegalArgumentException("Chest rewards must reference the RPG item library"));
             String id = marker.values().get("item-id");
             if (id == null || id.isBlank()) throw new IllegalArgumentException("Chest reward has no RPG item ID");
             slots.put(String.valueOf(slot), Map.of("item", id, "amount", item.getAmount()));

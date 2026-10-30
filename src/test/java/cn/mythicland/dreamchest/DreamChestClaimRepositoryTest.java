@@ -23,7 +23,10 @@ class DreamChestClaimRepositoryTest {
                 statement.execute(new String(resource.readAllBytes(), StandardCharsets.UTF_8));
             }
             SqlDatabase database = new SqlDatabase() {
-                public <T> T query(SqlWork<T> work) throws SQLException { return work.execute(connection); }
+                public <T> T query(SqlWork<T> work) throws SQLException {
+                    return work.execute(connection);
+                }
+
                 public <T> T transaction(SqlWork<T> work) throws SQLException {
                     connection.setAutoCommit(false);
                     try {
@@ -37,13 +40,17 @@ class DreamChestClaimRepositoryTest {
                         connection.setAutoCommit(true);
                     }
                 }
-                public void close() { }
+
+                public void close() {
+                }
             };
             var repository = new DreamChestClaimRepository(database);
             UUID player = UUID.randomUUID();
-            Map<String, Map<UUID, String>> contents = Map.of("new-world:1:2:3", Map.of(player, "empty-inventory-encoding"));
+            Map<String, Map<UUID, String>> contents =
+                    Map.of("new-world:1:2:3", Map.of(player, "empty-inventory-encoding"));
             repository.save(contents);
-            assertEquals(contents, new DreamChestClaimRepository(database).load(), "A fresh repository must retain consumed slots");
+            assertEquals(contents, new DreamChestClaimRepository(database).load(),
+                    "A fresh repository must retain consumed slots");
             Map<UUID, String> invalidPlayer = new HashMap<>();
             invalidPlayer.put(player, null);
             assertThrows(SQLException.class, () -> repository.save(Map.of("new-world:1:2:3", invalidPlayer)));

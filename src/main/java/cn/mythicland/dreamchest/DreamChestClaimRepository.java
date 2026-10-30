@@ -8,7 +8,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Stores encoded personal chest contents without using Bukkit objects on database threads. */
+/**
+ * Stores encoded personal chest contents without using Bukkit objects on database threads.
+ */
 final class DreamChestClaimRepository {
     private final SqlDatabase database;
 
@@ -19,7 +21,8 @@ final class DreamChestClaimRepository {
     Map<String, Map<UUID, String>> load() throws SQLException {
         return database.query(connection -> {
             Map<String, Map<UUID, String>> result = new LinkedHashMap<>();
-            try (var statement = connection.prepareStatement("SELECT chest_key, player_uuid, contents FROM player_chest_contents");
+            try (var statement = connection.prepareStatement(
+                    "SELECT chest_key, player_uuid, contents FROM player_chest_contents");
                  var rows = statement.executeQuery()) {
                 while (rows.next()) {
                     result.computeIfAbsent(rows.getString(1), ignored -> new LinkedHashMap<>())
