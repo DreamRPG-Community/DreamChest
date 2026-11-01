@@ -1,16 +1,16 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.CommandComponent;
-import cn.mythicland.dreamlib.bootstrap.annotation.CommandHandler;
-import cn.mythicland.dreamlib.command.CommandContext;
-import cn.mythicland.dreamlib.text.LegacyText;
+import cn.mythicland.framework.bukkit.command.CommandBinding;
+import cn.mythicland.framework.bukkit.command.CommandContext;
+import cn.mythicland.framework.bukkit.command.CommandRoute;
+import cn.mythicland.framework.bukkit.text.LegacyText;
 
 import java.util.Objects;
 
 /**
  * Handles DreamChest administrative commands.
  */
-@CommandComponent("dreamchest")
+@CommandBinding("dreamchest")
 final class DreamChestCommand {
 
     private final DreamChestPlugin plugin;
@@ -19,7 +19,7 @@ final class DreamChestCommand {
         this.plugin = Objects.requireNonNull(plugin, "plugin");
     }
 
-    @CommandHandler(value = "reload", permission = "dreamchest.reload")
+    @CommandRoute(path = {"dreamchest", "reload"}, maxArguments = Integer.MAX_VALUE, permission = "dreamchest.reload")
     void reload(CommandContext context) {
         context.requireArguments(0);
         plugin.reloadDreamChest();

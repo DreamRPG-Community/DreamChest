@@ -1,8 +1,7 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.database.SqlDatabase;
-import cn.mythicland.dreamlib.database.SqlWork;
-import org.junit.jupiter.api.Test;
+import cn.mythicland.framework.database.SqlDatabase;
+import cn.mythicland.framework.database.SqlWork;
 
 import java.nio.charset.StandardCharsets;
 import java.sql.DriverManager;
@@ -10,6 +9,8 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 

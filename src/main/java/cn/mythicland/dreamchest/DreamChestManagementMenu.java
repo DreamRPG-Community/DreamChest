@@ -1,18 +1,20 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.menu.*;
-import cn.mythicland.dreamlib.text.LegacyText;
 import cn.mythicland.dreamchest.api.DreamChestKey;
 import cn.mythicland.dreamchest.api.RefreshMode;
 import cn.mythicland.dreamchest.api.RefreshPolicy;
-import org.bukkit.Material;
-import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import cn.mythicland.framework.bukkit.menu.*;
+import cn.mythicland.framework.bukkit.menu.ClickType;
+import cn.mythicland.framework.bukkit.text.LegacyText;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.bukkit.Material;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 /**
  * Administrator configuration menu for one DreamChest.
@@ -21,7 +23,7 @@ import java.util.Objects;
  * lore contains the complete option list. The selected option is green with a triangle marker;
  * other options remain gray. Empty slots intentionally stay empty.</p>
  */
-final class DreamChestManagementMenu extends AnnotatedMenuView {
+final class DreamChestManagementMenu extends AbstractMenu {
 
     private static final int REFRESH_ENABLED_SLOT = 10;
     private static final int SIZE_SLOT = 11;
@@ -62,17 +64,25 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
     }
 
     @Override
-    public String title(Player player) {
+    public String buildTitle(Player player) {
         return LegacyText.colorize("&8DreamChest 管理");
     }
 
     @Override
-    public int size(Player player) {
-        return 27;
+    protected int resolveRowCount(Player player) {
+        return 3;
     }
 
-    @MenuButton(slot = REFRESH_ENABLED_SLOT)
-    private ItemStack refreshEnabledButton(Player player) {
+    @MenuSlot(slot = REFRESH_ENABLED_SLOT)
+    private AbstractButton refreshEnabledButton(Player viewer) {
+        ItemStack icon = renderRefreshEnabledButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> {
+            toggleRefreshEnabled(player);
+            return true;
+        });
+    }
+
+    private ItemStack renderRefreshEnabledButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         return MenuSelection.item(
                 Material.INK_SACK,
@@ -85,8 +95,13 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = SIZE_SLOT)
-    private ItemStack sizeButton(Player player) {
+    @MenuSlot(slot = SIZE_SLOT)
+    private AbstractButton sizeButton(Player viewer) {
+        ItemStack icon = renderSizeButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> toggleSize(player));
+    }
+
+    private ItemStack renderSizeButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         return MenuSelection.item(
                 Material.CHEST,
@@ -98,8 +113,16 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = MODE_SLOT)
-    private ItemStack refreshModeButton(Player player) {
+    @MenuSlot(slot = MODE_SLOT)
+    private AbstractButton refreshModeButton(Player viewer) {
+        ItemStack icon = renderRefreshModeButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> {
+            cycleRefreshMode(player, click);
+            return true;
+        });
+    }
+
+    private ItemStack renderRefreshModeButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         return MenuSelection.item(
                 Material.WATCH,
@@ -111,8 +134,14 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = TIME_SLOT)
-    private ItemStack refreshTimeButton(Player player) {
+    @MenuSlot(slot = TIME_SLOT)
+    private Optional<AbstractButton> refreshTimeButton(Player viewer) {
+        ItemStack icon = renderRefreshTimeButton(viewer);
+        if (icon == null) return Optional.empty();
+        return Optional.of(MenuButtons.selection(icon, (player, click, menus) -> cycleRefreshTime(player, click)));
+    }
+
+    private ItemStack renderRefreshTimeButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         DreamChestSettings.Snapshot settings = service.settingsForMenu();
         if (record.refreshMode() == RefreshMode.INTERVAL) {
@@ -138,8 +167,16 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         return null;
     }
 
-    @MenuButton(slot = PARTICLE_SLOT)
-    private ItemStack particleButton(Player player) {
+    @MenuSlot(slot = PARTICLE_SLOT)
+    private AbstractButton particleButton(Player viewer) {
+        ItemStack icon = renderParticleButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> {
+            cycleParticle(player, click);
+            return true;
+        });
+    }
+
+    private ItemStack renderParticleButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         DreamChestSettings.Snapshot settings = service.settingsForMenu();
         return MenuSelection.item(
@@ -152,8 +189,16 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = HOLOGRAM_SLOT)
-    private ItemStack hologramButton(Player player) {
+    @MenuSlot(slot = HOLOGRAM_SLOT)
+    private AbstractButton hologramButton(Player viewer) {
+        ItemStack icon = renderHologramButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> {
+            toggleHologram(player);
+            return true;
+        });
+    }
+
+    private ItemStack renderHologramButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         return MenuSelection.item(
                 Material.NAME_TAG,
@@ -165,8 +210,13 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = EDIT_SLOT)
-    private ItemStack editButton(Player player) {
+    @MenuSlot(slot = EDIT_SLOT)
+    private AbstractButton editButton(Player viewer) {
+        ItemStack icon = renderEditButton(viewer);
+        return MenuButtons.selection(icon, (player, click, menus) -> toggleEditing(player));
+    }
+
+    private ItemStack renderEditButton(Player player) {
         DreamChestRecord record = service.recordForMenu(key);
         return MenuItems.button(
                 record.editing() ? Material.REDSTONE_BLOCK : Material.EMERALD_BLOCK,
@@ -177,48 +227,37 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         );
     }
 
-    @MenuButton(slot = BACK_SLOT)
-    private ItemStack backButton(Player player) {
+    @MenuSlot(slot = BACK_SLOT)
+    private Optional<AbstractButton> backButton(Player viewer) {
+        ItemStack icon = renderBackButton(viewer);
+        if (icon == null) return Optional.empty();
+        return Optional.of(MenuButtons.action(icon, (player, click, menus) -> {
+            back(player);
+            return true;
+        }));
+    }
+
+    private ItemStack renderBackButton(Player player) {
         if (!service.hasMultipleAdminPanels(player, key)) return null;
         return MenuItems.button(Material.ARROW, "&e返回总管理面板", List.of(
                 "&7返回总管理面板"
         ));
     }
 
-    @MenuAction(
-            slot = REFRESH_ENABLED_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private void toggleRefreshEnabled(Player player) {
         service.toggleRefreshEnabled(player, key);
     }
 
-    @MenuAction(
-            slot = SIZE_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private boolean toggleSize(Player player) {
         return service.toggleSize(player, key);
     }
 
-    @MenuAction(
-            slot = MODE_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private void cycleRefreshMode(Player player, ClickType click) {
-        service.cycleRefreshMode(player, key, MenuSelection.direction(click) > 0);
+        service.cycleRefreshMode(player, key, click == ClickType.LEFT);
     }
 
-    @MenuAction(
-            slot = TIME_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private boolean cycleRefreshTime(Player player, ClickType click) {
-        boolean next = MenuSelection.direction(click) > 0;
+        boolean next = click == ClickType.LEFT;
         RefreshMode mode = service.recordForMenu(key).refreshMode();
         if (mode == RefreshMode.INTERVAL) {
             service.cycleInterval(player, key, next);
@@ -231,43 +270,33 @@ final class DreamChestManagementMenu extends AnnotatedMenuView {
         return false;
     }
 
-    @MenuAction(
-            slot = PARTICLE_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private void cycleParticle(Player player, ClickType click) {
-        service.cycleParticle(player, key, MenuSelection.direction(click) > 0);
+        service.cycleParticle(player, key, click == ClickType.LEFT);
     }
 
-    @MenuAction(
-            slot = HOLOGRAM_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private void toggleHologram(Player player) {
         service.toggleHologram(player, key);
     }
 
-    @MenuAction(
-            slot = EDIT_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = true
-    )
     private boolean toggleEditing(Player player) {
         return service.recordForMenu(key).editing()
                 ? service.exitEditing(player, key)
                 : service.enterEditing(player, key);
     }
 
-    @MenuAction(
-            slot = BACK_SLOT,
-            clicks = {ClickType.LEFT, ClickType.RIGHT},
-            playClickSound = false
-    )
     private void back(Player player) {
         if (!service.hasMultipleAdminPanels(player, key)) return;
         service.openAdminOverview(player, key);
+    }
+
+    @Override
+    public boolean replacesInPlace() {
+        return true;
+    }
+
+    @Override
+    public boolean handlesClicksAtHighestPriority() {
+        return true;
     }
 
     @Override

@@ -1,17 +1,18 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.ConfigComponent;
-import cn.mythicland.dreamlib.config.ConfigValue;
-import cn.mythicland.dreamlib.config.ConfigView;
-import cn.mythicland.dreamlib.config.ConfigurableComponent;
 import cn.mythicland.dreamchest.api.RefreshPolicy;
-import org.bukkit.Particle;
+import cn.mythicland.framework.bukkit.config.ConfigView;
+import cn.mythicland.framework.bukkit.config.ConfigurableComponent;
+import cn.mythicland.framework.bukkit.config.annotation.ConfigComponent;
+import cn.mythicland.framework.bukkit.config.annotation.ConfigProperty;
 
-import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
+import javax.annotation.Nonnull;
+
+import org.bukkit.Particle;
 
 /**
  * Loads and validates DreamChest's current configuration.
@@ -120,73 +121,73 @@ final class DreamChestSettings implements ConfigurableComponent {
     }
 
     private record RawSettings(
-            @ConfigValue(
+            @ConfigProperty(
                     path = "refresh.interval-options",
                     defaultValue = "1m,5m,10m,30m,60m,custom",
                     nonBlank = true
             )
             List<String> intervalOptions,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "refresh.custom-interval",
                     defaultValue = "2h",
                     nonBlank = true
             )
             String customInterval,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "refresh.daily-options",
                     defaultValue = "00:00,08:00,12:00,18:00,custom",
                     nonBlank = true
             )
             List<String> dailyOptions,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "refresh.custom-daily-time",
                     defaultValue = "20:00",
                     nonBlank = true
             )
             String customDailyTime,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "refresh.time-zone",
                     defaultValue = "Asia/Shanghai",
                     nonBlank = true
             )
             String timeZone,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "particle.options",
                     defaultValue = "none,VILLAGER_HAPPY",
                     nonBlank = true
             )
             List<String> particleOptions,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "particle.render-distance",
                     defaultValue = "32",
                     positive = true
             )
             int particleRenderDistance,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "particle.interval-ticks",
                     defaultValue = "10",
                     positive = true
             )
             int particleIntervalTicks,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "particle.count",
                     defaultValue = "12",
                     positive = true
             )
             int particleCount,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "hologram.view-distance",
                     defaultValue = "32.0",
                     positive = true
             )
             double hologramViewDistance,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "hologram.line-spacing",
                     defaultValue = "0.25",
                     positive = true
             )
             double hologramLineSpacing,
-            @ConfigValue(
+            @ConfigProperty(
                     path = "hologram.height",
                     defaultValue = "2.0",
                     positive = true

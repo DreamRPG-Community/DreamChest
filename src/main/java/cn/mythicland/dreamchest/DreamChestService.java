@@ -1,21 +1,32 @@
 package cn.mythicland.dreamchest;
 
+import cn.mythicland.framework.bukkit.content.ContentUpdate;
 import cn.mythicland.dreamchest.api.*;
-import cn.mythicland.dreamlib.admin.AdminPanelProvider;
-import cn.mythicland.dreamlib.admin.AdminPanelRegistration;
-import cn.mythicland.dreamlib.admin.AdminPanelService;
-import cn.mythicland.dreamlib.bootstrap.DreamLibPluginLifecycle;
-import cn.mythicland.dreamlib.bootstrap.PluginTaskScope;
-import cn.mythicland.dreamlib.bootstrap.annotation.LifecycleComponent;
-import cn.mythicland.dreamlib.bootstrap.annotation.ListenerComponent;
-import cn.mythicland.dreamlib.bootstrap.annotation.ServiceComponent;
-import cn.mythicland.dreamlib.container.ContainerAnimationService;
-import cn.mythicland.dreamlib.container.ContainerAnimationSpec;
-import cn.mythicland.dreamlib.menu.MenuService;
-import cn.mythicland.dreamlib.text.FloatingTextHandle;
-import cn.mythicland.dreamlib.text.FloatingTextService;
-import cn.mythicland.dreamlib.text.FloatingTextSpec;
-import cn.mythicland.dreamlib.text.LegacyText;
+import cn.mythicland.framework.bukkit.MainThread;
+import cn.mythicland.framework.bukkit.admin.AdminPanelProvider;
+import cn.mythicland.framework.bukkit.admin.AdminPanelRegistration;
+import cn.mythicland.framework.bukkit.admin.AdminPanelService;
+import cn.mythicland.framework.bukkit.component.ListenerComponent;
+import cn.mythicland.framework.bukkit.component.ServiceComponent;
+import cn.mythicland.framework.bukkit.container.ContainerAnimationService;
+import cn.mythicland.framework.bukkit.container.ContainerAnimationSpec;
+import cn.mythicland.framework.bukkit.hologram.FloatingTextHandle;
+import cn.mythicland.framework.bukkit.hologram.FloatingTextService;
+import cn.mythicland.framework.bukkit.hologram.FloatingTextSpec;
+import cn.mythicland.framework.bukkit.menu.MenuManager;
+import cn.mythicland.framework.bukkit.task.PluginTaskScope;
+import cn.mythicland.framework.bukkit.text.LegacyText;
+import cn.mythicland.framework.component.InjectComponent;
+import cn.mythicland.framework.component.LifecycleComponent;
+import cn.mythicland.framework.component.ManagedLifecycle;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -39,26 +50,20 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 /**
  * Main-thread DreamChest domain service.
  */
 @LifecycleComponent
+@InjectComponent
 @ListenerComponent
 @ServiceComponent(DreamChestApi.class)
-public final class DreamChestService implements DreamChestApi, Listener, DreamLibPluginLifecycle {
+public final class DreamChestService implements DreamChestApi, Listener, ManagedLifecycle {
 
     private static final String ADMIN_PERMISSION = "dreamchest.admin";
     private static final String RELOAD_PERMISSION = "dreamchest.reload";
 
     private final PluginTaskScope tasks;
-    private final MenuService menus;
+    private final MenuManager menus;
     private final AdminPanelService adminPanels;
     private final ContainerAnimationService animations;
     private final FloatingTextService floatingText;
@@ -85,7 +90,7 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
      */
     DreamChestService(
             PluginTaskScope tasks,
-            MenuService menus,
+            MenuManager menus,
             AdminPanelService adminPanels,
             ContainerAnimationService animations,
             FloatingTextService floatingText,
@@ -199,7 +204,7 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
     }
 
     @Override
-    public void enable() {
+    public void load() {
         animations.verifyCompatibility();
         floatingText.verifyCompatibility();
         cleanupMissingAnchors();
@@ -255,8 +260,14 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
         renderParticles();
     }
 
+    ContentUpdate prepareContentReload() {
+        if (!openSessions.isEmpty() || !nativeInventorySessions.isEmpty())
+            throw new IllegalStateException("Close chest views and editors before reloading content");
+        return store.prepareContentReload();
+    }
+
     @Override
-    public void disable() {
+    public void unload() {
         if (adminPanelRegistration != null) {
             adminPanelRegistration.close();
             adminPanelRegistration = null;
@@ -1190,12 +1201,6 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
         logger.info("Removed " + stale.size() + " DreamChest record(s) without a physical chest anchor.");
     }
 
-    private void requirePrimaryThread() {
-        if (!Bukkit.isPrimaryThread()) {
-            throw new IllegalStateException("DreamChest API must run on Bukkit's primary thread");
-        }
-    }
-
     private void removeIfManaged(DreamChestKey key, String message, Player notify) {
         if (store.find(key) == null) return;
         removeRecord(key, message, notify);
@@ -1231,6 +1236,10 @@ public final class DreamChestService implements DreamChestApi, Listener, DreamLi
             ItemStack[] live,
             boolean changed
     ) {
+    }
+
+    private void requirePrimaryThread() {
+        MainThread.require("DreamChest API must run on Bukkit's primary thread");
     }
 
 }

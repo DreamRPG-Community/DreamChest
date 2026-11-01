@@ -1,6 +1,6 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.database.SqlDatabase;
+import cn.mythicland.framework.database.SqlDatabase;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;

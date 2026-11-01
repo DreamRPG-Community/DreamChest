@@ -1,9 +1,10 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.container.ContainerAnimationHandle;
-import org.bukkit.inventory.Inventory;
+import cn.mythicland.framework.bukkit.container.ContainerAnimationHandle;
 
 import java.util.Objects;
+
+import org.bukkit.inventory.Inventory;
 
 /**
  * Tracks one private native inventory session.

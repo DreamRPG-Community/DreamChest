@@ -1,21 +1,17 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.api.DreamLibApi;
-import cn.mythicland.dreamlib.bootstrap.annotation.InjectComponent;
-import cn.mythicland.dreamlib.item.ItemStackArrayCodec;
-import cn.mythicland.dreamlib.item.ItemMarker;
-import cn.mythicland.dreamlib.storage.AtomicYamlStore;
+import cn.mythicland.framework.bukkit.content.ContentWorkspace;
+import cn.mythicland.framework.bukkit.content.ContentUpdate;
 import cn.mythicland.dreamchest.api.DreamChestKey;
 import cn.mythicland.dreamchest.api.DreamChestSize;
 import cn.mythicland.dreamchest.api.RefreshMode;
+import cn.mythicland.dreamlib.api.DreamLibApi;
+import cn.mythicland.framework.bukkit.MainThread;
+import cn.mythicland.framework.bukkit.item.ItemMarker;
+import cn.mythicland.framework.bukkit.item.ItemStackArrayCodec;
+import cn.mythicland.framework.bukkit.storage.AtomicYamlStore;
+import cn.mythicland.framework.component.InjectComponent;
 import io.lumine.xikage.mythicmobs.MythicMobs;
-import org.bukkit.Bukkit;
-import org.bukkit.Particle;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.InvalidConfigurationException;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,6 +23,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.bukkit.Particle;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.InvalidConfigurationException;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 /**
  * Owns chest template YAML and database-backed personal contents.
@@ -48,8 +51,7 @@ final class DreamChestStore implements AutoCloseable {
         Objects.requireNonNull(plugin, "plugin");
         this.lib = Objects.requireNonNull(lib, "lib");
         this.logger = Objects.requireNonNull(logger, "logger");
-        Path dataDirectory = plugin.getDataFolder().toPath().toAbsolutePath().normalize();
-        this.file = dataDirectory.resolve("chests.yml").normalize();
+        this.file = plugin.getDataFolder().toPath().resolve("chests.yml");
         this.claims = database.repository();
         load();
     }
@@ -132,8 +134,7 @@ final class DreamChestStore implements AutoCloseable {
     }
 
     void save(Collection<DreamChestRecord> currentRecords) {
-        if (!Bukkit.isPrimaryThread())
-            throw new IllegalStateException("DreamChest storage snapshots require the main thread");
+        MainThread.require("DreamChest storage snapshots require the main thread");
         Map<String, Object> snapshot = serialize(currentRecords);
         Map<String, Map<UUID, String>> playerSnapshot = new LinkedHashMap<>();
         for (DreamChestRecord record : currentRecords) {
@@ -165,6 +166,39 @@ final class DreamChestStore implements AutoCloseable {
             throw new IllegalStateException("DreamChest storage failed; restart after repairing storage",
                     storageFailure);
         }
+    }
+
+    ContentUpdate prepareContentReload() {
+        requireHealthy();
+        if (!lastWrite.isDone()) throw new IllegalStateException("Chest save is in progress");
+        YamlConfiguration yaml = ContentWorkspace.readYaml(file);
+        if (yaml.getInt("version") != VERSION) throw new IllegalArgumentException("Chest content requires version " + VERSION);
+        ConfigurationSection section = yaml.getConfigurationSection("chests");
+        if (section == null) throw new IllegalArgumentException("Missing chests section in " + file);
+        Map<DreamChestKey, DreamChestRecord> next = new LinkedHashMap<>();
+        for (String id : section.getKeys(false)) {
+            DreamChestKey key = DreamChestKey.parse(id);
+            DreamChestRecord record = readRecord(key, section.getConfigurationSection(id));
+            DreamChestRecord previous = records.get(key);
+            if (previous != null) {
+                record.setPlayerContents(previous.playerContentsCopy());
+                record.setNextRefreshEpochSecond(previous.nextRefreshEpochSecond());
+                record.reconcilePlayerContents(previous.liveCopy(), record.liveCopy());
+            }
+            next.put(key, record);
+        }
+        for (var old : records.entrySet()) {
+            if (!next.containsKey(old.getKey()) && !old.getValue().playerContentsCopy().isEmpty())
+                throw new IllegalStateException("Cannot remove a chest with persisted claims through content reload: " + old.getKey());
+        }
+        var previous = new LinkedHashMap<>(records);
+        return new ContentUpdate(() -> {
+            records.clear();
+            records.putAll(next);
+        }, () -> {
+            records.clear();
+            records.putAll(previous);
+        });
     }
 
     @Override

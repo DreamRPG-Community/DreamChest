@@ -1,5 +1,6 @@
 package cn.mythicland.dreamchest;
 
+import cn.mythicland.framework.validation.TextValidation;
 import cn.mythicland.dreamchest.api.*;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -54,8 +55,8 @@ final class DreamChestRecord {
         this.refreshEnabled = refreshEnabled;
         this.size = Objects.requireNonNull(size, "size");
         this.refreshMode = Objects.requireNonNull(refreshMode, "refreshMode");
-        this.intervalOption = requireOption(intervalOption, "intervalOption");
-        this.dailyOption = requireOption(dailyOption, "dailyOption");
+        this.intervalOption = TextValidation.requireText(intervalOption, "intervalOption");
+        this.dailyOption = TextValidation.requireText(dailyOption, "dailyOption");
         this.particle = Objects.requireNonNull(particle, "particle");
         this.hologramEnabled = hologramEnabled;
         this.editing = editing;
@@ -149,12 +150,6 @@ final class DreamChestRecord {
         return isEmpty(item) ? null : item.clone();
     }
 
-    private static String requireOption(String value, String fieldName) {
-        String text = Objects.requireNonNull(value, fieldName).trim();
-        if (text.isBlank()) throw new IllegalArgumentException(fieldName + " cannot be blank");
-        return text;
-    }
-
     DreamChestKey key() {
         return key;
     }
@@ -188,7 +183,7 @@ final class DreamChestRecord {
     }
 
     void setIntervalOption(String intervalOption) {
-        this.intervalOption = requireOption(intervalOption, "intervalOption");
+        this.intervalOption = TextValidation.requireText(intervalOption, "intervalOption");
     }
 
     String dailyOption() {
@@ -196,7 +191,7 @@ final class DreamChestRecord {
     }
 
     void setDailyOption(String dailyOption) {
-        this.dailyOption = requireOption(dailyOption, "dailyOption");
+        this.dailyOption = TextValidation.requireText(dailyOption, "dailyOption");
     }
 
     String particle() {

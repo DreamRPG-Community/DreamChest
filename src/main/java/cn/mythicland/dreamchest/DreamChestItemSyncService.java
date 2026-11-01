@@ -1,9 +1,9 @@
 package cn.mythicland.dreamchest;
 
-import cn.mythicland.dreamlib.bootstrap.annotation.ServiceComponent;
 import cn.mythicland.dreamchest.api.DreamChestItemReconciler;
 import cn.mythicland.dreamchest.api.DreamChestItemSyncApi;
 import cn.mythicland.dreamchest.api.DreamChestItemSyncReport;
+import cn.mythicland.framework.bukkit.component.ServiceComponent;
 
 import java.util.Objects;
 
