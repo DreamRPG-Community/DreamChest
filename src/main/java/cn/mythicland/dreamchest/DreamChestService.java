@@ -397,7 +397,8 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
             }
 
             updates.add(new RecordSync(record, oldTemplate, oldDraft, oldLive, oldPlayerContents,
-                    template, draft, live, recordChanged));
+                    template, draft, live, recordChanged
+            ));
         }
 
         try {
@@ -556,9 +557,10 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
         DreamChestRecord record = store.find(key);
         if (record == null) return;
         tasks.runLater(1L, () -> {
-            if (isChest(block) || store.find(key) != record) return;
-            removeRecord(key, "箱子已破坏, DreamChest 管理记录已删除。", event.getPlayer());
-        });
+                    if (isChest(block) || store.find(key) != record) return;
+                    removeRecord(key, "箱子已破坏, DreamChest 管理记录已删除。", event.getPlayer());
+                }
+        );
     }
 
     @EventHandler(
@@ -835,7 +837,8 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
             boolean editor,
             ItemStack[] contents
     ) {
-        closeManagedSession(player);
+        DreamChestInventorySession previous = nativeInventorySessions.get(player.getUniqueId());
+        if (previous != null) finishNativeSession(previous);
         DreamChestRecord record = requireRecord(key);
         DreamChestInventoryHolder holder = new DreamChestInventoryHolder(
                 key,
@@ -852,18 +855,19 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
         inventory.setContents(viewContents(contents, inventory.getSize()));
         DreamChestInventorySession session = new DreamChestInventorySession(holder);
         nativeInventorySessions.put(player.getUniqueId(), session);
-        openSessions.put(player.getUniqueId(), key);
-        if (!editor) claimViewers.computeIfAbsent(key, ignored -> new HashSet<>()).add(player.getUniqueId());
         try {
             player.openInventory(inventory);
+            openSessions.put(player.getUniqueId(), key);
+            if (!editor) claimViewers.computeIfAbsent(key, ignored -> new HashSet<>()).add(player.getUniqueId());
             session.attachAnimation(animations.open(sourceBlock, player, ContainerAnimationSpec.enderChest()));
         } catch (RuntimeException exception) {
             nativeInventorySessions.remove(player.getUniqueId(), session);
             openSessions.remove(player.getUniqueId(), key);
             claimViewers.computeIfPresent(key, (ignored, viewers) -> {
-                viewers.remove(player.getUniqueId());
-                return viewers.isEmpty() ? null : viewers;
-            });
+                        viewers.remove(player.getUniqueId());
+                        return viewers.isEmpty() ? null : viewers;
+                    }
+            );
             session.closeAnimation();
             throw exception;
         }
@@ -881,9 +885,10 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
         pendingNativeMutations.add(session);
         if (nativeFlushTask == null) {
             nativeFlushTask = tasks.runLater(1L, () -> {
-                nativeFlushTask = null;
-                flushPendingNativeMutation();
-            });
+                        nativeFlushTask = null;
+                        flushPendingNativeMutation();
+                    }
+            );
         }
         return true;
     }
@@ -1127,8 +1132,9 @@ public final class DreamChestService implements DreamChestApi, Listener, Managed
             );
             try {
                 emptyHolograms.put(key, floatingText.show(
-                        location, emptySpecification, player -> !record.hasClaimableItems(player.getUniqueId())
-                ));
+                                location, emptySpecification, player -> !record.hasClaimableItems(player.getUniqueId())
+                        )
+                );
             } catch (RuntimeException exception) {
                 claimable.close();
                 throw exception;
